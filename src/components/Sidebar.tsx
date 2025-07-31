@@ -11,25 +11,72 @@ import {
   Wallet,
   X,
   Zap,
-  Activity
+  Activity,
+  UserCog,
+  Building2,
+  Key,
+  Crown,
+  Database,
+  FileText
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { UserRole } from '../types/auth';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const navItems = [
-  { path: '/dashboard', icon: BarChart3, label: 'Dashboard' },
-  { path: '/strategy-builder', icon: Bot, label: 'AI Strategy Builder' },
-  { path: '/social-trading', icon: Users, label: 'Social Trading' },
-  { path: '/portfolio', icon: Wallet, label: 'Portfolio' },
-  { path: '/analytics', icon: TrendingUp, label: 'Analytics' },
-  { path: '/admin', icon: Shield, label: 'Admin Panel' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
+interface NavItem {
+  path: string;
+  icon: React.ComponentType<any>;
+  label: string;
+  roles?: UserRole[];
+  permission?: string;
+}
+
+const navItems: NavItem[] = [
+  { path: '/dashboard', icon: BarChart3, label: 'Dashboard', permission: 'viewDashboard' },
+  { path: '/strategy-builder', icon: Bot, label: 'AI Strategy Builder', permission: 'selectStrategies' },
+  { path: '/social-trading', icon: Users, label: 'Social Trading', permission: 'selectStrategies' },
+  { path: '/portfolio', icon: Wallet, label: 'Portfolio', permission: 'viewDashboard' },
+  { path: '/analytics', icon: TrendingUp, label: 'Analytics', permission: 'viewAnalytics' },
+  
+  // Super Admin only
+  { path: '/super-admin', icon: Crown, label: 'Super Admin', roles: [UserRole.SUPER_ADMIN] },
+  { path: '/platform-settings', icon: Database, label: 'Platform Settings', roles: [UserRole.SUPER_ADMIN] },
+  { path: '/audit-logs', icon: FileText, label: 'Audit Logs', roles: [UserRole.SUPER_ADMIN] },
+  
+  // Admin and above
+  { path: '/admin', icon: Shield, label: 'Admin Panel', permission: 'manageBrokers' },
+  { path: '/user-management', icon: UserCog, label: 'User Management', permission: 'manageUsers' },
+  
+  // Broker and above
+  { path: '/broker-panel', icon: Building2, label: 'Broker Panel', permission: 'createUsers' },
+  
+  // User and above
+  { path: '/api-keys', icon: Key, label: 'API Keys', permission: 'addApiKeys' },
+  { path: '/settings', icon: Settings, label: 'Settings', permission: 'viewDashboard' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const { user, hasPermission } = useAuth();
+
+  const isNavItemVisible = (item: NavItem): boolean => {
+    // Check role-based access
+    if (item.roles && item.roles.length > 0) {
+      return user ? item.roles.includes(user.role) : false;
+    }
+    
+    // Check permission-based access
+    if (item.permission) {
+      return hasPermission(item.permission as any);
+    }
+    
+    return true;
+  };
+
+  const visibleNavItems = navItems.filter(isNavItemVisible);
   return (
     <>
       {/* Mobile overlay */}
@@ -74,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
