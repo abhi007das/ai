@@ -366,9 +366,14 @@ const BrokerPanel: React.FC = () => {
       {activeTab !== 'overview' && activeTab !== 'users' && (
         <div className="bg-slate-800 p-8 rounded-lg border border-slate-700 text-center">
           <div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center mx-auto mb-4">
-            {tabs.find(tab => tab.id === activeTab)?.icon && (
-              <tabs.find(tab => tab.id === activeTab)!.icon className="w-8 h-8 text-slate-400" />
-            )}
+            {(() => {
+              const activeTabData = tabs.find(tab => tab.id === activeTab);
+              if (activeTabData?.icon) {
+                const IconComponent = activeTabData.icon;
+                return <IconComponent className="w-8 h-8 text-slate-400" />;
+              }
+              return null;
+            })()}
           </div>
           <h3 className="text-lg font-semibold text-white mb-2">
             {tabs.find(tab => tab.id === activeTab)?.label} Panel
